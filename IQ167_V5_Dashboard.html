@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IQ-167 V5.0 SECURE | Maxam Capital Dashboard</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js - More reliable than Recharts for standalone HTML -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <style>
+        /* Reset and Base */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --navy-900: #0F172A;
+            --navy-800: #1E293B;
+            --navy-700: #334155;
+            --navy-600: #475569;
+            --maxam-blue: #1E40AF;
+            --maxam-gold: #D97706;
+            --maxam-green: #059669;
+            --green-400: #4ADE80;
+            --green-500: #22C55E;
+            --red-400: #F87171;
+            --red-500: #EF4444;
+            --yellow-400: #FACC15;
+            --purple-400: #C084FC;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--navy-900);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        /* Layout */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 256px;
+            background-color: var(--navy-800);
+            border-right: 1px solid var(--navy-700);
+            padding: 1rem;
+            position: fixed;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--maxam-blue), var(--maxam-gold));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+        
+        .logo-text {
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+        
+        .logo-subtitle {
+            font-size: 0.7rem;
+            color: var(--maxam-gold);
+        }
+        
+        /* Navigation */
+        .nav-list {
+            list-style: none;
+            flex: 1;
+        }
+        
+        .nav-item {
+            margin-bottom: 0.25rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            color: var(--gray-400);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+        
+        .nav-link:hover {
+            background-color: var(--navy-700);
+            color: white;
+        }
+        
+        .nav-link.active {
+            background-color: var(--maxam-blue);
+            color: white;
+        }
+        
+        .nav-icon {
+            font-size: 1.25rem;
+        }
+        
+        /* System Status */
+        .system-status {
+            border-top: 1px solid var(--navy-700);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--green-400);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .status-text {
+            font-size: 0.875rem;
+            color: var(--gray-400);
+        }
+        
+        .latency-text {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            padding-left: 1rem;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 256px;
+            padding: 1.5rem;
+        }
+        
+        /* Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: capitalize;
+        }
+        
+        .page-subtitle {
+            font-size: 0.875rem;
+            color: var(--gray-400);
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background-color: var(--navy-800);
+            border-radius: 8px;
+        }
+        
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--green-400);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .datetime {
+            font-size: 0.875rem;
+            color: var(--gray-400);
+        }
+        
+        /* Grid Layouts */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .agents-trades-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+        
+        /* Cards */
+        .card {
+            background-color: var(--navy-800);
+            border: 1px solid var(--navy-700);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: border-color 0.2s;
+        }
+        
+        .card:hover {
+            border-color: rgba(30, 64, 175, 0.5);
+        }
+        
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        /* Stat Cards */
+        .stat-card {
+            background-color: var(--navy-800);
+            border: 1px solid var(--navy-700);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+        
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray-400);
+        }
+        
+        .stat-icon {
+            font-size: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-change {
+            font-size: 0.875rem;
+        }
+        
+        .stat-change.positive { color: var(--green-400); }
+        .stat-change.negative { color: var(--red-400); }
+        .stat-change.neutral { color: var(--gray-400); }
+        
+        /* Agent Cards */
+        .agent-card {
+            background-color: var(--navy-800);
+            border: 1px solid var(--navy-700);
+            border-radius: 8px;
+            padding: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        .agent-card:hover {
+            border-color: rgba(30, 64, 175, 0.5);
+        }
+        
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .agent-icon {
+            font-size: 1.5rem;
+        }
+        
+        .agent-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .agent-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .agent-category {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+        }
+        
+        .agent-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--green-400);
+            animation: pulse 2s infinite;
+        }
+        
+        .agent-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .agent-metric-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+        
+        .metric-label {
+            color: var(--gray-400);
+        }
+        
+        .metric-value {
+            font-weight: 500;
+        }
+        
+        .confidence-bar {
+            height: 6px;
+            background-color: var(--navy-700);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s;
+        }
+        
+        .signal-bullish { color: var(--green-400); }
+        .signal-neutral { color: var(--yellow-400); }
+        .signal-bearish { color: var(--red-400); }
+        
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+        
+        /* Trade List */
+        .trade-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .trade-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        
+        .trade-item:hover {
+            background-color: rgba(51, 65, 85, 0.5);
+        }
+        
+        .trade-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .trade-indicator {
+            width: 4px;
+            height: 32px;
+            border-radius: 2px;
+        }
+        
+        .trade-indicator.buy { background-color: var(--green-400); }
+        .trade-indicator.sell { background-color: var(--red-400); }
+        
+        .trade-symbol {
+            font-weight: 500;
+        }
+        
+        .trade-time {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+        
+        .trade-right {
+            text-align: right;
+        }
+        
+        .trade-value {
+            font-family: monospace;
+        }
+        
+        .trade-pnl {
+            font-size: 0.75rem;
+            font-family: monospace;
+        }
+        
+        .trade-pnl.positive { color: var(--green-400); }
+        .trade-pnl.negative { color: var(--red-400); }
+        
+        /* Consensus Section */
+        .consensus-section {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 1rem;
+            margin-top: 1rem;
+            border-top: 1px solid var(--navy-700);
+        }
+        
+        .consensus-item {
+            text-align: center;
+        }
+        
+        .consensus-label {
+            font-size: 0.875rem;
+            color: var(--gray-400);
+            margin-bottom: 0.25rem;
+        }
+        
+        .consensus-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        
+        .consensus-value.bullish { color: var(--green-400); }
+        .consensus-value.phase { color: var(--purple-400); }
+        
+        /* Allocation Legend */
+        .allocation-legend {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        
+        .legend-label {
+            color: var(--gray-400);
+        }
+        
+        .legend-value {
+            margin-left: auto;
+        }
+        
+        /* Assets Table */
+        .assets-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .assets-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            color: var(--gray-400);
+            font-weight: 500;
+            border-bottom: 1px solid var(--navy-700);
+        }
+        
+        .assets-table th:nth-child(2),
+        .assets-table th:nth-child(3),
+        .assets-table th:nth-child(4) {
+            text-align: right;
+        }
+        
+        .assets-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--navy-700);
+        }
+        
+        .assets-table tr:hover {
+            background-color: rgba(51, 65, 85, 0.5);
+        }
+        
+        .asset-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .asset-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+        
+        .asset-name {
+            font-weight: 500;
+        }
+        
+        .asset-fullname {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+        
+        .price-cell {
+            text-align: right;
+            font-family: monospace;
+        }
+        
+        .change-cell {
+            text-align: right;
+            font-family: monospace;
+        }
+        
+        .change-cell.positive { color: var(--green-400); }
+        .change-cell.negative { color: var(--red-400); }
+        
+        .class-cell {
+            text-align: right;
+        }
+        
+        .class-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background-color: var(--navy-700);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--gray-400);
+        }
+        
+        .allocation-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .allocation-bar {
+            flex: 1;
+            height: 8px;
+            background-color: var(--navy-700);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .allocation-fill {
+            height: 100%;
+            background-color: var(--maxam-blue);
+            border-radius: 4px;
+        }
+        
+        .allocation-value {
+            font-size: 0.875rem;
+            color: var(--gray-400);
+            width: 40px;
+            text-align: right;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .agents-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .agents-trades-grid { grid-template-columns: 1fr; }
+            .agents-grid { grid-template-columns: 1fr; }
+        }
+        
+        /* Hidden */
+        .hidden { display: none !important; }
+        
+        /* Page transitions */
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--navy-800); }
+        ::-webkit-scrollbar-thumb { background: var(--navy-600); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo-container">
+                <div class="logo-icon">M</div>
+                <div>
+                    <div class="logo-text">MAXAM CAPITAL</div>
+                    <div class="logo-subtitle">IQ-167 V5.0 SECURE</div>
+                </div>
+            </div>
+            
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <button class="nav-link active" data-page="dashboard">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-page="agents">
+                        <span class="nav-icon">🤖</span>
+                        <span>Agents</span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-page="trading">
+                        <span class="nav-icon">💹</span>
+                        <span>Trading</span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-page="risk">
+                        <span class="nav-icon">🛡️</span>
+                        <span>Risk</span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-page="analytics">
+                        <span class="nav-icon">📈</span>
+                        <span>Analytics</span>
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="system-status">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span class="status-text">System Online</span>
+                </div>
+                <div class="latency-text">Latency: 8.2ms</div>
+            </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div>
+                    <h1 class="page-title" id="page-title">Dashboard</h1>
+                    <p class="page-subtitle">IQ-167 V5.0 SECURE • Multi-Asset Trading Platform</p>
+                </div>
+                <div class="header-right">
+                    <div class="live-badge">
+                        <div class="live-dot"></div>
+                        <span class="status-text">Live</span>
+                    </div>
+                    <div class="datetime" id="datetime"></div>
+                </div>
+            </header>
+            
+            <!-- Dashboard Page -->
+            <div class="page active" id="page-dashboard">
+                <!-- Stats Row -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Total AUM</span>
+                            <span class="stat-icon">💰</span>
+                        </div>
+                        <div class="stat-value" id="stat-aum">$9.11B</div>
+                        <div class="stat-change positive" id="stat-ytd">+82.15% YTD</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Daily P&L</span>
+                            <span class="stat-icon">📈</span>
+                        </div>
+                        <div class="stat-value" id="stat-pnl">$42.85M</div>
+                        <div class="stat-change positive" id="stat-pnl-pct">+0.47%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Win Rate</span>
+                            <span class="stat-icon">🎯</span>
+                        </div>
+                        <div class="stat-value">77.8%</div>
+                        <div class="stat-change neutral">Last 30 days</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Sharpe Ratio</span>
+                            <span class="stat-icon">⚡</span>
+                        </div>
+                        <div class="stat-value">2.87</div>
+                        <div class="stat-change neutral">Risk-adjusted</div>
+                    </div>
+                </div>
+                
+                <!-- Charts Row -->
+                <div class="charts-grid">
+                    <div class="card">
+                        <h3 class="card-title">Portfolio Performance (30D)</h3>
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">Asset Allocation</h3>
+                        <div class="chart-container">
+                            <canvas id="allocationChart"></canvas>
+                        </div>
+                        <div class="allocation-legend" id="allocation-legend"></div>
+                    </div>
+                </div>
+                
+                <!-- Agents & Trades Row -->
+                <div class="agents-trades-grid">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 class="card-title" style="margin-bottom: 0;">19-Agent Status</h3>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div class="status-dot"></div>
+                                <span style="font-size: 0.875rem; color: var(--gray-400);">All Active</span>
+                            </div>
+                        </div>
+                        <div class="agents-grid" id="agents-grid"></div>
+                        <div class="consensus-section">
+                            <div class="consensus-item">
+                                <div class="consensus-label">Consensus Signal</div>
+                                <div class="consensus-value bullish">BULLISH (76)</div>
+                            </div>
+                            <div class="consensus-item">
+                                <div class="consensus-label">Avg Confidence</div>
+                                <div class="consensus-value">87.4%</div>
+                            </div>
+                            <div class="consensus-item">
+                                <div class="consensus-label">Market Phase</div>
+                                <div class="consensus-value phase">MID-CYCLE</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">Recent Trades</h3>
+                        <div class="trade-list" id="trade-list"></div>
+                    </div>
+                </div>
+                
+                <!-- Assets Table -->
+                <div class="card">
+                    <h3 class="card-title">Asset Universe</h3>
+                    <table class="assets-table">
+                        <thead>
+                            <tr>
+                                <th>Asset</th>
+                                <th>Price</th>
+                                <th>24h Change</th>
+                                <th>Class</th>
+                                <th>Allocation</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assets-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Agents Page -->
+            <div class="page" id="page-agents">
+                <div id="agents-full-list"></div>
+            </div>
+            
+            <!-- Trading Page -->
+            <div class="page" id="page-trading">
+                <div class="stats-grid" id="venues-grid"></div>
+                <div class="card" style="margin-top: 1.5rem;">
+                    <h3 class="card-title">Live Trade Stream</h3>
+                    <div class="trade-list" id="trading-trade-list" style="max-height: 500px;"></div>
+                </div>
+            </div>
+            
+            <!-- Risk Page -->
+            <div class="page" id="page-risk">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">VaR (95%)</span>
+                            <span class="stat-icon">📉</span>
+                        </div>
+                        <div class="stat-value">0.9%</div>
+                        <div class="stat-change positive">Target &lt;2%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">CVaR (95%)</span>
+                            <span class="stat-icon">⚠️</span>
+                        </div>
+                        <div class="stat-value">1.3%</div>
+                        <div class="stat-change positive">Target &lt;3%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Max Drawdown</span>
+                            <span class="stat-icon">📊</span>
+                        </div>
+                        <div class="stat-value">-5.7%</div>
+                        <div class="stat-change neutral">Peak to trough</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Gross Leverage</span>
+                            <span class="stat-icon">⚡</span>
+                        </div>
+                        <div class="stat-value">1.8x</div>
+                        <div class="stat-change positive">Target &lt;3x</div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 1.5rem;">
+                    <h3 class="card-title">Risk Limits Status</h3>
+                    <div id="risk-limits"></div>
+                </div>
+            </div>
+            
+            <!-- Analytics Page -->
+            <div class="page" id="page-analytics">
+                <div class="card">
+                    <h3 class="card-title">10-Year Performance Projections</h3>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="projectionsChart"></canvas>
+                    </div>
+                </div>
+                <div class="stats-grid" style="margin-top: 1.5rem;" id="phase-stats"></div>
+                <div class="card" style="margin-top: 1.5rem; background: linear-gradient(135deg, rgba(30, 64, 175, 0.2), rgba(217, 119, 6, 0.2)); border-color: rgba(30, 64, 175, 0.3);">
+                    <h3 class="card-title">10-Year Summary</h3>
+                    <div class="stats-grid" style="grid-template-columns: repeat(6, 1fr);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--maxam-gold);">$42.18B</div>
+                            <div style="font-size: 0.875rem; color: var(--gray-400);">Final AUM</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--green-400);">13.6x</div>
+                            <div style="font-size: 0.875rem; color: var(--gray-400);">Multiple</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700;">162.8%</div>
+                            <div style="font-size: 0.875rem; color: var(--gray-400);">CAGR</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700;">76.2%</div>
+                            <div style="font-size: 0.875rem; color: var(--gray-400);">Win Rate</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700;">2.87</div>
+                            <div style="font-size: 0.875rem; color: var(--gray-400);">Sharpe Ratio</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700;">-5.7%</div>
+                            <div style="font-size: 0.875rem; color: var(--gray-400);">Max Drawdown</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // ============================================
+        // DATA
+        // ============================================
+        const agents = [
+            { id: 'sentiment', name: 'Sentiment', category: 'Market Analysis', icon: '💭', color: '#8B5CF6', confidence: 87, signal: 72 },
+            { id: 'fundamental', name: 'Fundamental', category: 'Market Analysis', icon: '📊', color: '#06B6D4', confidence: 82, signal: 65 },
+            { id: 'technical', name: 'Technical', category: 'Market Analysis', icon: '📈', color: '#10B981', confidence: 91, signal: 85 },
+            { id: 'liquidity', name: 'Liquidity', category: 'Market Analysis', icon: '💧', color: '#3B82F6', confidence: 88, signal: 78 },
+            { id: 'macro', name: 'Macro', category: 'Market Analysis', icon: '🌍', color: '#F59E0B', confidence: 84, signal: 68 },
+            { id: 'regime', name: 'Regime', category: 'Market Analysis', icon: '🔄', color: '#EC4899', confidence: 86, signal: 74 },
+            { id: 'correlation', name: 'Correlation', category: 'Market Analysis', icon: '🔗', color: '#14B8A6', confidence: 89, signal: 76 },
+            { id: 'alt_data', name: 'Alt Data', category: 'Market Analysis', icon: '🛰️', color: '#A855F7', confidence: 78, signal: 62 },
+            { id: 'defi', name: 'DeFi', category: 'Asset Specialist', icon: '🔷', color: '#6366F1', confidence: 90, signal: 82 },
+            { id: 'fixed_income', name: 'Fixed Income', category: 'Asset Specialist', icon: '🏦', color: '#0EA5E9', confidence: 88, signal: 82 },
+            { id: 'equity', name: 'Equity', category: 'Asset Specialist', icon: '📉', color: '#22C55E', confidence: 85, signal: 70 },
+            { id: 'commodity', name: 'Commodity', category: 'Asset Specialist', icon: '🥇', color: '#EAB308', confidence: 83, signal: 68 },
+            { id: 'derivatives', name: 'Derivatives', category: 'Asset Specialist', icon: '📋', color: '#F97316', confidence: 90, signal: 84 },
+            { id: 'fx', name: 'FX', category: 'Asset Specialist', icon: '💱', color: '#84CC16', confidence: 81, signal: 66 },
+            { id: 'portfolio', name: 'Portfolio', category: 'Execution & Risk', icon: '🎯', color: '#8B5CF6', confidence: 92, signal: 88 },
+            { id: 'risk', name: 'Risk', category: 'Execution & Risk', icon: '🛡️', color: '#EF4444', confidence: 95, signal: 90 },
+            { id: 'execution', name: 'Execution', category: 'Execution & Risk', icon: '⚡', color: '#F59E0B', confidence: 93, signal: 86 },
+            { id: 'hedging', name: 'Hedging', category: 'Execution & Risk', icon: '🔒', color: '#6B7280', confidence: 87, signal: 75 },
+            { id: 'master', name: 'Master', category: 'Integration', icon: '🧠', color: '#7C3AED', confidence: 94, signal: 88 }
+        ];
+        
+        const assets = [
+            { symbol: 'SOL', name: 'Solana', class: 'Crypto', price: 98.42, change: 4.2, allocation: 38.5, color: '#9945FF' },
+            { symbol: 'BTC', name: 'Bitcoin', class: 'Crypto', price: 97842.50, change: 1.8, allocation: 12.8, color: '#F7931A' },
+            { symbol: 'ETH', name: 'Ethereum', class: 'Crypto', price: 3542.80, change: 2.1, allocation: 9.5, color: '#627EEA' },
+            { symbol: 'XRP', name: 'XRP', class: 'Crypto', price: 1.42, change: 3.5, allocation: 4.2, color: '#23292F' },
+            { symbol: 'BNB', name: 'BNB', class: 'Crypto', price: 642.30, change: 1.2, allocation: 3.8, color: '#F3BA2F' },
+            { symbol: 'SPY', name: 'S&P 500 ETF', class: 'Equity', price: 598.42, change: 0.4, allocation: 5.2, color: '#22C55E' },
+            { symbol: 'TLT', name: 'Treasury Bonds', class: 'Fixed Income', price: 92.15, change: -0.2, allocation: 4.8, color: '#0EA5E9' },
+            { symbol: 'GLD', name: 'Gold ETF', class: 'Commodity', price: 242.80, change: 0.8, allocation: 6.2, color: '#EAB308' },
+            { symbol: 'VIX', name: 'Volatility Index', class: 'Derivative', price: 14.82, change: -2.4, allocation: 2.5, color: '#EF4444' },
+            { symbol: 'USDC', name: 'USD Coin', class: 'Stablecoin', price: 1.00, change: 0.0, allocation: 12.5, color: '#2775CA' }
+        ];
+        
+        const allocationData = [
+            { name: 'Crypto', value: 68.8, color: '#8B5CF6' },
+            { name: 'Fixed Income', value: 4.8, color: '#0EA5E9' },
+            { name: 'Commodities', value: 6.2, color: '#EAB308' },
+            { name: 'Equities', value: 5.2, color: '#22C55E' },
+            { name: 'Cash', value: 12.5, color: '#6B7280' },
+            { name: 'Other', value: 2.5, color: '#EC4899' }
+        ];
+        
+        const venues = [
+            { name: 'Jupiter', volume: 2.84, trades: 12450, fillRate: 99.2 },
+            { name: 'Binance', volume: 1.85, trades: 8920, fillRate: 99.8 },
+            { name: 'Coinbase', volume: 0.92, trades: 4210, fillRate: 99.5 },
+            { name: 'IBKR', volume: 0.45, trades: 1850, fillRate: 99.9 },
+            { name: 'Deribit', volume: 0.38, trades: 2100, fillRate: 98.8 },
+            { name: 'CME', volume: 0.28, trades: 680, fillRate: 99.7 }
+        ];
+        
+        const tenYearData = [
+            { year: '2026', return: 82.15 },
+            { year: '2027', return: 12.38 },
+            { year: '2028', return: 14.82 },
+            { year: '2029', return: 84.23 },
+            { year: '2030', return: 118.45 },
+            { year: '2031', return: 6.92 },
+            { year: '2032', return: 17.65 },
+            { year: '2033', return: 79.82 },
+            { year: '2034', return: 105.38 },
+            { year: '2035', return: 9.87 }
+        ];
+        
+        const riskLimits = [
+            { name: 'Portfolio VaR', current: 0.9, limit: 2.0 },
+            { name: 'Single Position', current: 12.8, limit: 15.0 },
+            { name: 'Gross Leverage', current: 1.8, limit: 3.0 },
+            { name: 'Crypto Exposure', current: 82, limit: 85.0 },
+            { name: 'Counterparty', current: 18.5, limit: 25.0 },
+            { name: 'Illiquid Assets', current: 4.2, limit: 10.0 }
+        ];
+        
+        const phaseData = [
+            { phase: 'Bull', return: 111.92, winRate: 78.5, sharpe: 3.12, color: '#22C55E' },
+            { phase: 'Bear', return: 16.24, winRate: 74.8, sharpe: 2.45, color: '#EF4444' },
+            { phase: 'Peak', return: 9.72, winRate: 72.1, sharpe: 1.89, color: '#F59E0B' },
+            { phase: 'Recovery', return: 82.03, winRate: 76.2, sharpe: 2.78, color: '#3B82F6' }
+        ];
+        
+        // Trades storage
+        let trades = [];
+        
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function formatCurrency(value) {
+            if (value >= 1e9) return '$' + (value / 1e9).toFixed(2) + 'B';
+            if (value >= 1e6) return '$' + (value / 1e6).toFixed(2) + 'M';
+            if (value >= 1e3) return '$' + (value / 1e3).toFixed(2) + 'K';
+            return '$' + value.toFixed(2);
+        }
+        
+        function formatPercent(value) {
+            const sign = value > 0 ? '+' : '';
+            return sign + value.toFixed(2) + '%';
+        }
+        
+        function generateTrades() {
+            const symbols = ['SOL', 'BTC', 'ETH', 'XRP', 'SPY', 'GLD', 'TLT'];
+            const newTrades = [];
+            for (let i = 0; i < 20; i++) {
+                newTrades.push({
+                    symbol: symbols[Math.floor(Math.random() * symbols.length)],
+                    side: Math.random() > 0.4 ? 'BUY' : 'SELL',
+                    value: Math.random() * 5000000 + 100000,
+                    pnl: (Math.random() - 0.3) * 5,
+                    time: new Date(Date.now() - i * 60000 * Math.random() * 10).toLocaleTimeString()
+                });
+            }
+            return newTrades;
+        }
+        
+        function generatePerformanceData() {
+            const data = [];
+            let value = 8.5;
+            for (let i = 30; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                value = value * (1 + (Math.random() - 0.45) * 0.02);
+                data.push({
+                    date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                    value: value
+                });
+            }
+            return data;
+        }
+        
+        // ============================================
+        // RENDER FUNCTIONS
+        // ============================================
+        function renderAgentCard(agent) {
+            const signalClass = agent.signal > 70 ? 'signal-bullish' : agent.signal > 40 ? 'signal-neutral' : 'signal-bearish';
+            const signalText = agent.signal > 70 ? 'BULLISH' : agent.signal > 40 ? 'NEUTRAL' : 'BEARISH';
+            
+            return `
+                <div class="agent-card">
+                    <div class="agent-header">
+                        <span class="agent-icon">${agent.icon}</span>
+                        <div class="agent-info">
+                            <div class="agent-name">${agent.name}</div>
+                            <div class="agent-category">${agent.category}</div>
+                        </div>
+                        <div class="agent-status-dot"></div>
+                    </div>
+                    <div class="agent-metrics">
+                        <div class="agent-metric-row">
+                            <span class="metric-label">Confidence</span>
+                            <span class="metric-value">${agent.confidence}%</span>
+                        </div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${agent.confidence}%; background-color: ${agent.color};"></div>
+                        </div>
+                        <div class="agent-metric-row">
+                            <span class="metric-label">Signal</span>
+                            <span class="metric-value ${signalClass}">${signalText}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderAgents() {
+            const grid = document.getElementById('agents-grid');
+            grid.innerHTML = agents.slice(0, 12).map(renderAgentCard).join('');
+        }
+        
+        function renderAgentsFull() {
+            const container = document.getElementById('agents-full-list');
+            const categories = ['Market Analysis', 'Asset Specialist', 'Execution & Risk', 'Integration'];
+            
+            container.innerHTML = categories.map(category => {
+                const categoryAgents = agents.filter(a => a.category === category);
+                return `
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 class="card-title" style="margin-bottom: 0;">${category}</h3>
+                            <span style="font-size: 0.875rem; color: var(--gray-400);">${categoryAgents.length} agents</span>
+                        </div>
+                        <div class="agents-grid">
+                            ${categoryAgents.map(renderAgentCard).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderTrade(trade) {
+            const pnlClass = trade.pnl >= 0 ? 'positive' : 'negative';
+            return `
+                <div class="trade-item">
+                    <div class="trade-left">
+                        <div class="trade-indicator ${trade.side.toLowerCase()}"></div>
+                        <div>
+                            <div class="trade-symbol">${trade.symbol}</div>
+                            <div class="trade-time">${trade.time}</div>
+                        </div>
+                    </div>
+                    <div class="trade-right">
+                        <div class="trade-value">${formatCurrency(trade.value)}</div>
+                        <div class="trade-pnl ${pnlClass}">${formatPercent(trade.pnl)}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderTrades() {
+            document.getElementById('trade-list').innerHTML = trades.map(renderTrade).join('');
+            document.getElementById('trading-trade-list').innerHTML = trades.map(renderTrade).join('');
+        }
+        
+        function renderAssets() {
+            const tbody = document.getElementById('assets-tbody');
+            tbody.innerHTML = assets.map(asset => `
+                <tr>
+                    <td>
+                        <div class="asset-cell">
+                            <div class="asset-icon" style="background-color: ${asset.color}20; color: ${asset.color};">
+                                ${asset.symbol.charAt(0)}
+                            </div>
+                            <div>
+                                <div class="asset-name">${asset.symbol}</div>
+                                <div class="asset-fullname">${asset.name}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="price-cell">${asset.price >= 1000 ? formatCurrency(asset.price) : '$' + asset.price.toFixed(2)}</td>
+                    <td class="change-cell ${asset.change >= 0 ? 'positive' : 'negative'}">${formatPercent(asset.change)}</td>
+                    <td class="class-cell"><span class="class-badge">${asset.class}</span></td>
+                    <td>
+                        <div class="allocation-cell">
+                            <div class="allocation-bar">
+                                <div class="allocation-fill" style="width: ${(asset.allocation / 40) * 100}%;"></div>
+                            </div>
+                            <span class="allocation-value">${asset.allocation}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderVenues() {
+            const grid = document.getElementById('venues-grid');
+            grid.innerHTML = venues.map(venue => `
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-label">${venue.name}</span>
+                        <span style="font-size: 0.75rem; padding: 0.25rem 0.5rem; background-color: rgba(34, 197, 94, 0.2); color: var(--green-400); border-radius: 4px;">LIVE</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center; margin-top: 0.5rem;">
+                        <div>
+                            <div style="font-size: 1.25rem; font-weight: 700;">$${venue.volume}B</div>
+                            <div style="font-size: 0.75rem; color: var(--gray-400);">Volume</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.25rem; font-weight: 700;">${venue.trades.toLocaleString()}</div>
+                            <div style="font-size: 0.75rem; color: var(--gray-400);">Trades</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--green-400);">${venue.fillRate}%</div>
+                            <div style="font-size: 0.75rem; color: var(--gray-400);">Fill Rate</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderRiskLimits() {
+            const container = document.getElementById('risk-limits');
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                    ${riskLimits.map(item => {
+                        const utilization = (item.current / item.limit) * 100;
+                        const barColor = utilization > 90 ? 'var(--red-500)' : utilization > 70 ? 'var(--yellow-400)' : 'var(--green-500)';
+                        const textColor = utilization > 90 ? 'var(--red-400)' : utilization > 70 ? 'var(--yellow-400)' : 'var(--green-400)';
+                        return `
+                            <div style="margin-bottom: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 0.5rem;">
+                                    <span style="color: var(--gray-400);">${item.name}</span>
+                                    <span style="color: ${textColor};">${item.current} / ${item.limit}</span>
+                                </div>
+                                <div style="height: 8px; background-color: var(--navy-700); border-radius: 4px; overflow: hidden;">
+                                    <div style="height: 100%; background-color: ${barColor}; border-radius: 4px; width: ${Math.min(utilization, 100)}%;"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+        
+        function renderPhaseStats() {
+            const container = document.getElementById('phase-stats');
+            container.innerHTML = phaseData.map(phase => `
+                <div class="card">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${phase.color};"></div>
+                        <span style="font-weight: 600;">${phase.phase} Market</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--gray-400); font-size: 0.875rem;">Avg Return</span>
+                            <span style="font-weight: 700;">${formatPercent(phase.return)}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--gray-400); font-size: 0.875rem;">Win Rate</span>
+                            <span style="font-weight: 500;">${phase.winRate}%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--gray-400); font-size: 0.875rem;">Sharpe</span>
+                            <span style="font-weight: 500;">${phase.sharpe}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderAllocationLegend() {
+            const legend = document.getElementById('allocation-legend');
+            legend.innerHTML = allocationData.map(item => `
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: ${item.color};"></div>
+                    <span class="legend-label">${item.name}</span>
+                    <span class="legend-value">${item.value}%</span>
+                </div>
+            `).join('');
+        }
+        
+        // ============================================
+        // CHARTS
+        // ============================================
+        let performanceChart = null;
+        let allocationChart = null;
+        let projectionsChart = null;
+        
+        function initCharts() {
+            // Performance Chart
+            const perfData = generatePerformanceData();
+            const perfCtx = document.getElementById('performanceChart').getContext('2d');
+            performanceChart = new Chart(perfCtx, {
+                type: 'line',
+                data: {
+                    labels: perfData.map(d => d.date),
+                    datasets: [{
+                        label: 'AUM ($B)',
+                        data: perfData.map(d => d.value),
+                        borderColor: '#1E40AF',
+                        backgroundColor: 'rgba(30, 64, 175, 0.2)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(51, 65, 85, 0.5)' },
+                            ticks: { color: '#9CA3AF' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(51, 65, 85, 0.5)' },
+                            ticks: {
+                                color: '#9CA3AF',
+                                callback: value => '$' + value.toFixed(1) + 'B'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Allocation Chart
+            const allocCtx = document.getElementById('allocationChart').getContext('2d');
+            allocationChart = new Chart(allocCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: allocationData.map(d => d.name),
+                    datasets: [{
+                        data: allocationData.map(d => d.value),
+                        backgroundColor: allocationData.map(d => d.color),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    cutout: '65%'
+                }
+            });
+            
+            // Projections Chart
+            const projCtx = document.getElementById('projectionsChart').getContext('2d');
+            projectionsChart = new Chart(projCtx, {
+                type: 'bar',
+                data: {
+                    labels: tenYearData.map(d => d.year),
+                    datasets: [{
+                        label: 'Annual Return (%)',
+                        data: tenYearData.map(d => d.return),
+                        backgroundColor: '#1E40AF',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(51, 65, 85, 0.5)' },
+                            ticks: { color: '#9CA3AF' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(51, 65, 85, 0.5)' },
+                            ticks: {
+                                color: '#9CA3AF',
+                                callback: value => value + '%'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // ============================================
+        // NAVIGATION
+        // ============================================
+        function switchPage(pageName) {
+            // Update nav
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.toggle('active', link.dataset.page === pageName);
+            });
+            
+            // Update pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.toggle('active', page.id === 'page-' + pageName);
+            });
+            
+            // Update title
+            document.getElementById('page-title').textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+        }
+        
+        // ============================================
+        // REAL-TIME UPDATES
+        // ============================================
+        function updateDateTime() {
+            document.getElementById('datetime').textContent = new Date().toLocaleString();
+        }
+        
+        function simulateUpdates() {
+            // Occasionally add a new trade
+            if (Math.random() > 0.6) {
+                const symbols = ['SOL', 'BTC', 'ETH', 'XRP', 'SPY', 'GLD', 'TLT'];
+                trades.unshift({
+                    symbol: symbols[Math.floor(Math.random() * symbols.length)],
+                    side: Math.random() > 0.4 ? 'BUY' : 'SELL',
+                    value: Math.random() * 5000000 + 100000,
+                    pnl: (Math.random() - 0.3) * 5,
+                    time: new Date().toLocaleTimeString()
+                });
+                trades = trades.slice(0, 20);
+                renderTrades();
+            }
+            
+            // Update P&L
+            const pnl = 42850000 + (Math.random() - 0.45) * 2000000;
+            const pnlPct = pnl / 9110000000 * 100;
+            document.getElementById('stat-pnl').textContent = formatCurrency(pnl);
+            document.getElementById('stat-pnl-pct').textContent = formatPercent(pnlPct);
+            document.getElementById('stat-pnl-pct').className = 'stat-change ' + (pnlPct >= 0 ? 'positive' : 'negative');
+        }
+        
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Generate initial trades
+            trades = generateTrades();
+            
+            // Render all components
+            renderAgents();
+            renderAgentsFull();
+            renderTrades();
+            renderAssets();
+            renderVenues();
+            renderRiskLimits();
+            renderPhaseStats();
+            renderAllocationLegend();
+            
+            // Initialize charts
+            initCharts();
+            
+            // Setup navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', () => switchPage(link.dataset.page));
+            });
+            
+            // Start updates
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            setInterval(simulateUpdates, 2000);
+        });
+    </script>
+</body>
+</html>
